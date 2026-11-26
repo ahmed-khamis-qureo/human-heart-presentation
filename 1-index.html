@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>The Human Heart - Presentation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Cairo:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: #060203;
+      color: #ffffff;
+      font-family: 'Montserrat', sans-serif;
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+      position: relative;
+      user-select: none;
+    }
+
+    /* كانفاس المشهد ثلاثي الأبعاد */
+    #scene-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      touch-action: none;
+    }
+
+    /* تدرج أطراف سينمائي */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0.05) 35%, rgba(0,0,0,0.88) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* حاوية الشرائح */
+    .slides {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .slide {
+      position: absolute;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.75s ease, transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* الشريحة 1: The Human Heart في الأسفل بالمنتصف */
+    .slide-title {
+      bottom: 15%;
+      left: 50%;
+      transform: translate(-50%, 24px);
+      text-align: center;
+      width: 92%;
+    }
+    .slide-title.active {
+      transform: translate(-50%, 0);
+    }
+    .slide-title h1 {
+      font-size: clamp(2.2rem, 6.5vw, 4.6rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      text-shadow: 0 8px 30px rgba(0, 0, 0, 0.95);
+    }
+    .slide-title .credit {
+      margin-top: 6px;
+      font-size: clamp(0.85rem, 2vw, 1.1rem);
+      color: rgba(255, 255, 255, 0.72);
+      font-weight: 600;
+    }
+
+    /* الشريحة 2: Location and Size (النص على اليمين والقلب على الشمال) */
+    .slide-location {
+      top: 50%;
+      right: 5%;
+      width: min(520px, 48vw);
+      transform: translateY(-50%) translateX(35px);
+      text-align: left;
+    }
+    .slide-location.active {
+      transform: translateY(-50%) translateX(0);
+    }
+
+    /* الشريحة 3: Blood Circulation Pathway (النص على الشمال والقلب على اليمين) */
+    .slide-circulation {
+      top: 50%;
+      left: 5%;
+      width: min(540px, 48vw);
+      transform: translateY(-50%) translateX(-35px);
+      text-align: left;
+    }
+    .slide-circulation.active {
+      transform: translateY(-50%) translateX(0);
+    }
+
+    .slide h2 {
+      font-size: clamp(1.6rem, 3.6vw, 2.75rem);
+      font-weight: 800;
+      margin-bottom: 14px;
+      line-height: 1.15;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.85);
+    }
+
+    .slide p {
+      font-size: clamp(0.92rem, 1.45vw, 1.18rem);
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.9);
+      font-weight: 400;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
+    }
+
+    /* شريط التنقل السفلي للموبايل والكمبيوتر */
+    .nav-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(15, 15, 20, 0.78);
+      backdrop-filter: blur(10px);
+      padding: 8px 18px;
+      border-radius: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-family: 'Cairo', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .nav-btn:active {
+      background: #dc2626;
+    }
+
+    .dots {
+      display: flex;
+      gap: 7px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+    }
+    .dot.active {
+      width: 20px;
+      border-radius: 8px;
+      background: #ef4444;
+    }
+
+    /* تنسيق خاص للموبايل العمودي */
+    @media (max-width: 768px) {
+      .slide-location, .slide-circulation {
+        top: auto;
+        bottom: 84px;
+        left: 50%;
+        right: auto;
+        width: 90vw;
+        transform: translate(-50%, 20px);
+        background: rgba(10, 4, 6, 0.72);
+        backdrop-filter: blur(10px);
+        padding: 18px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .slide-location.active, .slide-circulation.active {
+        transform: translate(-50%, 0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="scene-canvas"></canvas>
+  <div class="vignette"></div>
+
+  <div class="slides">
+    <!-- الشريحة 1 -->
+    <div class="slide slide-title active" data-index="0">
+      <h1>The Human Heart</h1>
+      <div class="credit">By: mr.obieda</div>
+    </div>
+
+    <!-- الشريحة 2 -->
+    <div class="slide slide-location" data-index="1">
+      <h2>Location and Size</h2>
+      <p>
+        The human heart is a vital muscular organ that functions as the central component of the circulatory system. It continuously pumps blood throughout the body, delivering oxygen and nutrients to tissues while removing carbon dioxide and other waste products. This powerful organ works tirelessly, beating approximately 100,000 times per day, ensuring that all body systems receive the support they need to function properly.
+      </p>
+    </div>
+
+    <!-- الشريحة 3 -->
+    <div class="slide slide-circulation" data-index="2">
+      <h2>Blood Circulation Pathway</h2>
+      <p>
+        The heart plays a key role in the double circulatory system, which includes the pulmonary and systemic circuits. Blood flows from the body into the right side of the heart, then to the lungs for oxygenation. It then returns to the left side of the heart and is pumped out to the rest of the body. This continuous loop ensures that oxygen-rich blood reaches all tissues.
+      </p>
+    </div>
+  </div>
+
+  <div class="nav-bar">
+    <button class="nav-btn" id="prevBtn">السابق</button>
+    <div class="dots">
+      <div class="dot active" data-go="0"></div>
+      <div class="dot" data-go="1"></div>
+      <div class="dot" data-go="2"></div>
+    </div>
+    <button class="nav-btn" id="nextBtn">التالي</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const canvas = document.getElementById('scene-canvas');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x070203, 0.035);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+
+    // إضاءة درامية
+    scene.add(new THREE.AmbientLight(0x3b0a10, 1.5));
+
+    const keyLight = new THREE.PointLight(0xff2e3d, 3.2, 18);
+    keyLight.position.set(2.5, 2.5, 3.5);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.PointLight(0x3b82f6, 2.2, 16);
+    rimLight.position.set(-3.5, 1.5, 2.5);
+    scene.add(rimLight);
+
+    // بناء مجسم القلب والأوعية والصمامات
+    const heart = new THREE.Group();
+    scene.add(heart);
+
+    const tissueMat = new THREE.MeshPhysicalMaterial({
+      color: 0x8f121c,
+      emissive: 0x240305,
+      roughness: 0.28,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.18,
+      transparent: true,
+      opacity: 1
+    });
+
+    const blueMat = new THREE.MeshPhysicalMaterial({
+      color: 0x1d4ed8,
+      emissive: 0x061233,
+      roughness: 0.3,
+      clearcoat: 0.8
+    });
+
+    const redVesselMat = new THREE.MeshPhysicalMaterial({
+      color: 0xdc2626,
+      emissive: 0x380707,
+      roughness: 0.26,
+      clearcoat: 0.85
+    });
+
+    const chordaeMat = new THREE.MeshStandardMaterial({
+      color: 0xf1f5f9,
+      roughness: 0.4
+    });
+
+    // البطينان
+    const bodyGeo = new THREE.SphereGeometry(1.1, 44, 44);
+    const pos = bodyGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i);
+      let y = pos.getY(i);
+      let z = pos.getZ(i);
+      if (y < 0) {
+        const s = Math.max(0.22, 1 + y * 0.5);
+        x *= s;
+        z *= s;
+        x += y * 0.25;
+      }
+      pos.setXYZ(i, x * 0.95, y * 1.25, z * 0.82);
+    }
+    bodyGeo.computeVertexNormals();
+    const mainBody = new THREE.Mesh(bodyGeo, tissueMat);
+    mainBody.position.set(0.08, -0.22, 0);
+    heart.add(mainBody);
+
+    const rightVent = new THREE.Mesh(new THREE.SphereGeometry(0.82, 32, 32), tissueMat);
+    rightVent.scale.set(0.85, 1.1, 0.72);
+    rightVent.position.set(-0.42, -0.18, 0.2);
+    heart.add(rightVent);
+
+    // الأذينان والأوعية الكبيرة
+    const rightAtrium = new THREE.Mesh(new THREE.SphereGeometry(0.52, 28, 28), blueMat);
+    rightAtrium.position.set(-0.65, 0.52, 0.05);
+    heart.add(rightAtrium);
+
+    const leftAtrium = new THREE.Mesh(new THREE.SphereGeometry(0.5, 28, 28), redVesselMat);
+    leftAtrium.position.set(0.62, 0.58, -0.08);
+    heart.add(leftAtrium);
+
+    const aortaCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.05, 0.45, 0.05),
+      new THREE.Vector3(0.0, 1.3, 0.0),
+      new THREE.Vector3(0.35, 1.58, -0.15),
+      new THREE.Vector3(0.62, 1.05, -0.3)
+    ]);
+    heart.add(new THREE.Mesh(new THREE.TubeGeometry(aortaCurve, 36, 0.22, 18, false), redVesselMat));
+
+    const svc = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.19, 1.0, 18), blueMat);
+    svc.position.set(-0.62, 1.15, 0.05);
+    heart.add(svc);
+
+    // الصمامات والأوتار للقطة الأولى القريبة
+    const valvesGroup = new THREE.Group();
+    heart.add(valvesGroup);
+
+    function buildValve(x, y, z, scale = 1) {
+      const g = new THREE.Group();
+      g.position.set(x, y, z);
+      g.scale.setScalar(scale);
+
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.045, 14, 28), chordaeMat);
+      ring.rotation.x = Math.PI / 2.2;
+      g.add(ring);
+
+      for (let i = 0; i < 3; i++) {
+        const ang = (i * Math.PI * 2) / 3;
+        const cusp = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.22, 12), chordaeMat);
+        cusp.position.set(Math.cos(ang) * 0.09, -0.06, Math.sin(ang) * 0.09);
+        cusp.rotation.x = Math.PI;
+        g.add(cusp);
+
+        for (let k = -1; k <= 1; k++) {
+          const line = new THREE.LineCurve3(
+            new THREE.Vector3(Math.cos(ang) * 0.1, -0.12, Math.sin(ang) * 0.1),
+            new THREE.Vector3(Math.cos(ang + k * 0.22) * 0.18, -0.62, Math.sin(ang + k * 0.22) * 0.14)
+          );
+          g.add(new THREE.Mesh(new THREE.TubeGeometry(line, 5, 0.012, 6, false), chordaeMat));
+        }
+      }
+      return g;
+    }
+
+    valvesGroup.add(buildValve(-0.24, 0.16, 0.55, 1.15));
+    valvesGroup.add(buildValve(0.26, 0.18, 0.52, 1.05));
+
+    // نقاط زوايا الكاميرا وموقع القلب لكل شريحة
+    function getSlideTargets(idx) {
+      const mobile = window.innerWidth <= 768;
+      if (idx === 0) {
+        return {
+          cam: new THREE.Vector3(0.0, 0.06, 1.52),
+          hPos: new THREE.Vector3(0, 0.08, 0),
+          hRot: new THREE.Euler(0.1, 0, 0),
+          opacity: 0.35
+        };
+      }
+      if (idx === 1) {
+        return {
+          cam: new THREE.Vector3(0, 0, mobile ? 4.8 : 4.2),
+          hPos: new THREE.Vector3(mobile ? 0 : -1.35, mobile ? 0.65 : -0.05, 0),
+          hRot: new THREE.Euler(0.08, 0.42, -0.06),
+          opacity: 1.0
+        };
+      }
+      return {
+        cam: new THREE.Vector3(0, 0, mobile ? 4.8 : 4.2),
+        hPos: new THREE.Vector3(mobile ? 0 : 1.35, mobile ? 0.65 : -0.05, 0),
+        hRot: new THREE.Euler(0.08, -0.42, 0.06),
+        opacity: 1.0
+      };
+    }
+
+    let currentSlide = 0;
+    let targetState = getSlideTargets(0);
+    camera.position.copy(targetState.cam);
+    heart.position.copy(targetState.hPos);
+    heart.rotation.copy(targetState.hRot);
+    tissueMat.opacity = targetState.opacity;
+
+    function goSlide(idx) {
+      currentSlide = (idx + 3) % 3;
+      document.querySelectorAll('.slide').forEach((s, i) => s.classList.toggle('active', i === currentSlide));
+      document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+      targetState = getSlideTargets(currentSlide);
+    }
+
+    document.getElementById('nextBtn').onclick = () => goSlide(currentSlide + 1);
+    document.getElementById('prevBtn').onclick = () => goSlide(currentSlide - 1);
+    document.querySelectorAll('.dot').forEach(d => {
+      d.onclick = () => goSlide(Number(d.dataset.go));
+    });
+
+    // سحب باللمس للموبايل والماوس للكمبيوتر
+    let touchStartX = 0;
+    window.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    window.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 45) {
+        if (dx < 0) goSlide(currentSlide + 1);
+        else goSlide(currentSlide - 1);
+      }
+    }, { passive: true });
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === ' ') goSlide(currentSlide + 1);
+      if (e.key === 'ArrowLeft') goSlide(currentSlide - 1);
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      targetState = getSlideTargets(currentSlide);
+    });
+
+    // حلقة الحركة والنبض
+    const clock = new THREE.Clock();
+    function render() {
+      requestAnimationFrame(render);
+      const t = clock.getElapsedTime();
+      const p = (t % 0.9) / 0.9;
+
+      let beat = 1.0;
+      if (p < 0.16) beat = 1.0 + Math.sin((p / 0.16) * Math.PI) * 0.06;
+      else if (p > 0.24 && p < 0.38) beat = 1.0 + Math.sin(((p - 0.24) / 0.14) * Math.PI) * 0.035;
+
+      heart.scale.setScalar(beat);
+      camera.position.lerp(targetState.cam, 0.06);
+      heart.position.lerp(targetState.hPos, 0.06);
+      heart.rotation.x += (targetState.hRot.x - heart.rotation.x) * 0.06;
+      heart.rotation.y += (targetState.hRot.y + Math.sin(t * 0.8) * 0.06 - heart.rotation.y) * 0.06;
+      heart.rotation.z += (targetState.hRot.z - heart.rotation.z) * 0.06;
+      tissueMat.opacity += (targetState.opacity - tissueMat.opacity) * 0.06;
+
+      renderer.render(scene, camera);
+    }
+    render();
+  </script>
+</body>
+</html>
